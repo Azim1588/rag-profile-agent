@@ -1038,16 +1038,6 @@ Stores analytics events (populated by Celery tasks).
 - 🚧 **Multi-hop Retrieval** - Iterative query refinement (framework ready, disabled by default)
 - 🚧 **HyDE Retrieval** - Hypothetical Document Embeddings (framework ready, disabled by default)
 
-### 📋 Planned Features
-
-- 📋 **Document Upload API** - Direct document upload endpoint
-- 📋 **Admin Dashboard** - Web interface for document management
-- 📋 **Advanced Analytics** - Query analytics and performance dashboards
-- 📋 **Multi-language Support** - Support for multiple languages
-- 📋 **Citation Links** - Source document citations in responses
-- 📋 **Conversation Export** - Export conversation history
-- 📋 **User Profiles** - User-specific document sets
-
 ---
 
 ## 🧪 Testing
@@ -1269,27 +1259,6 @@ Metrics are logged as structured JSON logs.
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass (`pytest`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-### Code Style
-
-- Follow PEP 8 Python style guide
-- Use `black` for code formatting: `black app/ tests/`
-- Use `flake8` for linting: `flake8 app/ tests/`
-- Use type hints where applicable
-
----
 
 ## 📄 License
 
@@ -1307,12 +1276,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/rag-profile-agent/issues)
-- **Documentation**: See `/docs` folder or [project wiki](https://github.com/yourusername/rag-profile-agent/wiki)
-- **Email**: [Your email here]
 
----
-
-**Made with ❤️ using FastAPI, LangGraph, and OpenAI**
+**Made with❤️by Azim Khamis using FastAPI, LangGraph, and OpenAI**
