@@ -1,0 +1,150 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rag_postgres
+    environment:
+      POSTGRES_DB: profile_agent
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: rag_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    container_name: rag_app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Override database connection for Docker service names
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: profile_agent
+      REDIS_HOST: redis
+      # Override DATABASE_URL to use Docker service name
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/profile_agent
+      REDIS_URL: redis://redis:6379/0
+      # Override Celery Redis URLs for Docker service name
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./scripts:/app/scripts
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  celery:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: rag_celery
+    env_file:
+      - .env
+    environment:
+      # Override database connection for Docker service names
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: profile_agent
+      REDIS_HOST: redis
+      # Override DATABASE_URL to use Docker service name
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/profile_agent
+      REDIS_URL: redis://redis:6379/0
+      # Override Celery Redis URLs for Docker service name
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./scripts:/app/scripts
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: rag_celery_beat
+    env_file:
+      - .env
+    environment:
+      # Override database connection for Docker service names
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: profile_agent
+      REDIS_HOST: redis
+      # Override DATABASE_URL to use Docker service name
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/profile_agent
+      REDIS_URL: redis://redis:6379/0
+      # Override Celery Redis URLs for Docker service name
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      celery:
+        condition: service_started
+    volumes:
+      - ./app:/app/app
+      - ./scripts:/app/scripts
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+
+  flower:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: rag_flower
+    env_file:
+      - .env
+    environment:
+      # Override Celery Redis URLs for Docker service name
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    ports:
+      - "5555:5555"  # Flower web interface
+    depends_on:
+      redis:
+        condition: service_healthy
+      celery:
+        condition: service_started
+    command: celery -A app.tasks.celery_app flower --port=5555
+
+volumes:
+  postgres_data:
+  redis_data:
+
