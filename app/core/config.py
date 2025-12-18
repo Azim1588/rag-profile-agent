@@ -1,4 +1,5 @@
 """Application configuration from environment variables."""
+import os
 from pydantic_settings import BaseSettings
 from typing import Optional
 
@@ -14,7 +15,7 @@ class Settings(BaseSettings):
     
     # FastAPI
     HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    PORT: int = int(os.getenv("PORT", "8000"))  # Railway sets PORT env var
     WORKERS: int = 4
     
     # PostgreSQL
